@@ -30,6 +30,9 @@ import java.nio.ByteOrder;
 // TODO(kevinb): this class still needs some design-and-document-for-inheritance love
 @ElementTypesAreNonnullByDefault
 abstract class AbstractStreamingHasher extends AbstractHasher {
+
+  // ---------- Attributs ---------- //
+
   /** Buffer via which we pass data to the hash algorithm (the implementor) */
   private final ByteBuffer buffer;
 
@@ -39,62 +42,7 @@ abstract class AbstractStreamingHasher extends AbstractHasher {
   /** Number of bytes processed per process() invocation. */
   private final int chunkSize;
 
-  /**
-   * Constructor for use by subclasses. This hasher instance will process chunks of the specified
-   * size.
-   *
-   * @param chunkSize the number of bytes available per {@link #process(ByteBuffer)} invocation;
-   *     must be at least 4
-   */
-  protected AbstractStreamingHasher(int chunkSize) {
-    this(chunkSize, chunkSize);
-  }
-
-  /**
-   * Constructor for use by subclasses. This hasher instance will process chunks of the specified
-   * size, using an internal buffer of {@code bufferSize} size, which must be a multiple of {@code
-   * chunkSize}.
-   *
-   * @param chunkSize the number of bytes available per {@link #process(ByteBuffer)} invocation;
-   *     must be at least 4
-   * @param bufferSize the size of the internal buffer. Must be a multiple of chunkSize
-   */
-  protected AbstractStreamingHasher(int chunkSize, int bufferSize) {
-    // TODO(kevinb): check more preconditions (as bufferSize >= chunkSize) if this is ever public
-    checkArgument(bufferSize % chunkSize == 0);
-
-    // TODO(user): benchmark performance difference with longer buffer
-    // always space for a single primitive
-    this.buffer = ByteBuffer.allocate(bufferSize + 7).order(ByteOrder.LITTLE_ENDIAN);
-    this.bufferSize = bufferSize;
-    this.chunkSize = chunkSize;
-  }
-
-  /** Processes the available bytes of the buffer (at most {@code chunk} bytes). */
-  protected abstract void process(ByteBuffer bb);
-
-  /**
-   * This is invoked for the last bytes of the input, which are not enough to fill a whole chunk.
-   * The passed {@code ByteBuffer} is guaranteed to be non-empty.
-   *
-   * <p>This implementation simply pads with zeros and delegates to {@link #process(ByteBuffer)}.
-   */
-  protected void processRemaining(ByteBuffer bb) {
-    Java8Compatibility.position(bb, bb.limit()); // move at the end
-    Java8Compatibility.limit(bb, chunkSize + 7); // get ready to pad with longs
-    while (bb.position() < chunkSize) {
-      bb.putLong(0);
-    }
-    Java8Compatibility.limit(bb, chunkSize);
-    Java8Compatibility.flip(bb);
-    process(bb);
-  }
-
-  @Override
-  @CanIgnoreReturnValue
-  public final Hasher putBytes(byte[] bytes, int off, int len) {
-    return putBytesInternal(ByteBuffer.wrap(bytes, off, len).order(ByteOrder.LITTLE_ENDIAN));
-  }
+  // ---------- Public Methods ---------- //
 
   @Override
   @CanIgnoreReturnValue
@@ -106,32 +54,6 @@ abstract class AbstractStreamingHasher extends AbstractHasher {
     } finally {
       readBuffer.order(order);
     }
-  }
-
-  @CanIgnoreReturnValue
-  private Hasher putBytesInternal(ByteBuffer readBuffer) {
-    // If we have room for all of it, this is easy
-    if (readBuffer.remaining() <= buffer.remaining()) {
-      buffer.put(readBuffer);
-      munchIfFull();
-      return this;
-    }
-
-    // First add just enough to fill buffer size, and munch that
-    int bytesToCopy = bufferSize - buffer.position();
-    for (int i = 0; i < bytesToCopy; i++) {
-      buffer.put(readBuffer.get());
-    }
-    munch(); // buffer becomes empty here, since chunkSize divides bufferSize
-
-    // Now process directly from the rest of the input buffer
-    while (readBuffer.remaining() >= chunkSize) {
-      process(readBuffer);
-    }
-
-    // Finally stick the remainder back in our usual buffer
-    buffer.put(readBuffer);
-    return this;
   }
 
   /*
@@ -195,12 +117,73 @@ abstract class AbstractStreamingHasher extends AbstractHasher {
     return makeHash();
   }
 
+  @Override
+  @CanIgnoreReturnValue
+  public final Hasher putBytes(byte[] bytes, int off, int len) {
+    return putBytesInternal(ByteBuffer.wrap(bytes, off, len).order(ByteOrder.LITTLE_ENDIAN));
+  }
+
+  // ---------- Protected Methods ---------- //
+
   /**
    * Computes a hash code based on the data that have been provided to this hasher. This is called
    * after all chunks are handled with {@link #process} and any leftover bytes that did not make a
    * complete chunk are handled with {@link #processRemaining}.
    */
   protected abstract HashCode makeHash();
+
+  /** Processes the available bytes of the buffer (at most {@code chunk} bytes). */
+  protected abstract void process(ByteBuffer bb);
+
+  /**
+   * Constructor for use by subclasses. This hasher instance will process chunks of the specified
+   * size.
+   *
+   * @param chunkSize the number of bytes available per {@link #process(ByteBuffer)} invocation;
+   *     must be at least 4
+   */
+  protected AbstractStreamingHasher(int chunkSize) {
+    this(chunkSize, chunkSize);
+  }
+
+  /**
+   * Constructor for use by subclasses. This hasher instance will process chunks of the specified
+   * size, using an internal buffer of {@code bufferSize} size, which must be a multiple of {@code
+   * chunkSize}.
+   *
+   * @param chunkSize the number of bytes available per {@link #process(ByteBuffer)} invocation;
+   *     must be at least 4
+   * @param bufferSize the size of the internal buffer. Must be a multiple of chunkSize
+   */
+  protected AbstractStreamingHasher(int chunkSize, int bufferSize) {
+    // TODO(kevinb): check more preconditions (as bufferSize >= chunkSize) if this is ever public
+    checkArgument(bufferSize % chunkSize == 0);
+
+    // TODO(user): benchmark performance difference with longer buffer
+    // always space for a single primitive
+    this.buffer = ByteBuffer.allocate(bufferSize + 7).order(ByteOrder.LITTLE_ENDIAN);
+    this.bufferSize = bufferSize;
+    this.chunkSize = chunkSize;
+  }
+
+  /**
+   * This is invoked for the last bytes of the input, which are not enough to fill a whole chunk.
+   * The passed {@code ByteBuffer} is guaranteed to be non-empty.
+   *
+   * <p>This implementation simply pads with zeros and delegates to {@link #process(ByteBuffer)}.
+   */
+  protected void processRemaining(ByteBuffer bb) {
+    Java8Compatibility.position(bb, bb.limit()); // move at the end
+    Java8Compatibility.limit(bb, chunkSize + 7); // get ready to pad with longs
+    while (bb.position() < chunkSize) {
+      bb.putLong(0);
+    }
+    Java8Compatibility.limit(bb, chunkSize);
+    Java8Compatibility.flip(bb);
+    process(bb);
+  }
+
+  // ---------- Private method ---------- //
 
   // Process pent-up data in chunks
   private void munchIfFull() {
@@ -218,5 +201,31 @@ abstract class AbstractStreamingHasher extends AbstractHasher {
       process(buffer);
     }
     buffer.compact(); // preserve any remaining data that do not make a full chunk
+  }
+
+  @CanIgnoreReturnValue
+  private Hasher putBytesInternal(ByteBuffer readBuffer) {
+    // If we have room for all of it, this is easy
+    if (readBuffer.remaining() <= buffer.remaining()) {
+      buffer.put(readBuffer);
+      munchIfFull();
+      return this;
+    }
+
+    // First add just enough to fill buffer size, and munch that
+    int bytesToCopy = bufferSize - buffer.position();
+    for (int i = 0; i < bytesToCopy; i++) {
+      buffer.put(readBuffer.get());
+    }
+    munch(); // buffer becomes empty here, since chunkSize divides bufferSize
+
+    // Now process directly from the rest of the input buffer
+    while (readBuffer.remaining() >= chunkSize) {
+      process(readBuffer);
+    }
+
+    // Finally stick the remainder back in our usual buffer
+    buffer.put(readBuffer);
+    return this;
   }
 }
