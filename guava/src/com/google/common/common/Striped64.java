@@ -9,7 +9,7 @@
  * http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/src/jsr166e/Striped64.java?revision=1.9
  */
 
-package com.google.common.cache;
+package com.google.common.common;
 
 import com.google.common.annotations.GwtIncompatible;
 import java.util.Random;
@@ -23,7 +23,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
-abstract class Striped64 extends Number {
+public abstract class Striped64 extends Number {
   /*
    * This class maintains a lazily-initialized table of atomically
    * updated variables, plus an extra "base" field. The table size
@@ -94,16 +94,16 @@ abstract class Striped64 extends Number {
    * <p>JVM intrinsics note: It would be possible to use a release-only form of CAS here, if it were
    * provided.
    */
-  static final class Cell {
-    volatile long p0, p1, p2, p3, p4, p5, p6;
-    volatile long value;
-    volatile long q0, q1, q2, q3, q4, q5, q6;
+  public static final class Cell {
+    public volatile long p0, p1, p2, p3, p4, p5, p6;
+    public volatile long value;
+    public volatile long q0, q1, q2, q3, q4, q5, q6;
 
     Cell(long x) {
       value = x;
     }
 
-    final boolean cas(long cmp, long val) {
+    public final boolean cas(long cmp, long val) {
       return UNSAFE.compareAndSwapLong(this, valueOffset, cmp, val);
     }
 
@@ -127,36 +127,36 @@ abstract class Striped64 extends Number {
    * class, we use a suboptimal int[] representation to avoid introducing a new type that can impede
    * class-unloading when ThreadLocals are not removed.
    */
-  static final ThreadLocal<int @Nullable []> threadHashCode = new ThreadLocal<>();
+  public static final ThreadLocal<int @Nullable []> threadHashCode = new ThreadLocal<>();
 
   /** Generator of new random hash codes */
-  static final Random rng = new Random();
+  public static final Random rng = new Random();
 
   /** Number of CPUS, to place bound on table size */
-  static final int NCPU = Runtime.getRuntime().availableProcessors();
+  public static final int NCPU = Runtime.getRuntime().availableProcessors();
 
   /** Table of cells. When non-null, size is a power of 2. */
-  @CheckForNull transient volatile Cell[] cells;
+  @CheckForNull public transient volatile Cell[] cells;
 
   /**
    * Base value, used mainly when there is no contention, but also as a fallback during table
    * initialization races. Updated via CAS.
    */
-  transient volatile long base;
+  public transient volatile long base;
 
   /** Spinlock (locked via CAS) used when resizing and/or creating Cells. */
-  transient volatile int busy;
+  public transient volatile int busy;
 
-  /** Package-private default constructor */
-  Striped64() {}
+  /** Public default constructor */
+  public Striped64() {}
 
   /** CASes the base field. */
-  final boolean casBase(long cmp, long val) {
+  public final boolean casBase(long cmp, long val) {
     return UNSAFE.compareAndSwapLong(this, baseOffset, cmp, val);
   }
 
   /** CASes the busy field from 0 to 1 to acquire lock. */
-  final boolean casBusy() {
+  public final boolean casBusy() {
     return UNSAFE.compareAndSwapInt(this, busyOffset, 0, 1);
   }
 
@@ -168,7 +168,7 @@ abstract class Striped64 extends Number {
    * @param newValue the argument from a user update call
    * @return result of the update function
    */
-  abstract long fn(long currentValue, long newValue);
+  public abstract long fn(long currentValue, long newValue);
 
   /**
    * Handles cases of updates involving initialization, resizing, creating new Cells, and/or
@@ -179,7 +179,7 @@ abstract class Striped64 extends Number {
    * @param hc the hash code holder
    * @param wasUncontended false if CAS failed before call
    */
-  final void retryUpdate(long x, @CheckForNull int[] hc, boolean wasUncontended) {
+  public final void retryUpdate(long x, @CheckForNull int[] hc, boolean wasUncontended) {
     int h;
     if (hc == null) {
       threadHashCode.set(hc = new int[1]); // Initialize randomly
@@ -253,7 +253,7 @@ abstract class Striped64 extends Number {
   }
 
   /** Sets base and all cells to the given value. */
-  final void internalReset(long initialValue) {
+  public final void internalReset(long initialValue) {
     Cell[] as = cells;
     base = initialValue;
     if (as != null) {

@@ -39,12 +39,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Doug Lea
  */
 @ElementTypesAreNonnullByDefault
-final class LongAdder extends Striped64 implements Serializable, LongAddable {
+final class LongAdder extends com.google.common.common.Striped64 implements Serializable, LongAddable {
   private static final long serialVersionUID = 7249069246863182397L;
 
   /** Version of plus for use in retryUpdate */
   @Override
-  final long fn(long v, long x) {
+  public final long fn(long v, long x) {
     return v + x;
   }
 
