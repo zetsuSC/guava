@@ -232,7 +232,7 @@ public class LinkedListMultimap<K extends @Nullable Object, V extends @Nullable 
       tail = node;
       KeyList<K, V> keyList = keyToKeyList.get(key);
       if (keyList == null) {
-        keyToKeyList.put(key, keyList = new KeyList<>(node));
+        keyToKeyList.put(key, new KeyList<>(node));
         modCount++;
       } else {
         keyList.count++;

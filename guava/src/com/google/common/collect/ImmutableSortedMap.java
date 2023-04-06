@@ -1116,10 +1116,9 @@ public final class ImmutableSortedMap<K, V> extends ImmutableSortedMapFauxveride
     ImmutableSortedMap<K, V> result = descendingMap;
     if (result == null) {
       if (isEmpty()) {
-        return result = emptyMap(Ordering.from(comparator()).reverse());
+        return emptyMap(Ordering.from(comparator()).reverse());
       } else {
-        return result =
-            new ImmutableSortedMap<>(
+        return new ImmutableSortedMap<>(
                 (RegularImmutableSortedSet<K>) keySet.descendingSet(), valueList.reverse(), this);
       }
     }
