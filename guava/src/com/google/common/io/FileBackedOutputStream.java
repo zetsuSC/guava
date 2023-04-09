@@ -127,6 +127,7 @@ public final class FileBackedOutputStream extends OutputStream {
             }
 
             @Override
+            @Deprecated
             protected void finalize() {
               try {
                 reset();
