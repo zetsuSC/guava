@@ -199,7 +199,7 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
       totalSize++;
       return true;
     } else {
-      return false;
+      throw new IllegalStateException("The value could not be added to the collection");
     }
   }
 
