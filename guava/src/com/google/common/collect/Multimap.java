@@ -213,7 +213,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    *     multimap already contained the key-value pair and doesn't allow duplicates
    */
   @CanIgnoreReturnValue
-  boolean put(@ParametricNullness K key, @ParametricNullness V value);
+  void put(@ParametricNullness K key, @ParametricNullness V value);
 
   /**
    * Removes a single key-value pair with the key {@code key} and the value {@code value} from this
@@ -253,7 +253,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * @return {@code true} if the multimap changed
    */
   @CanIgnoreReturnValue
-  boolean putAll(Multimap<? extends K, ? extends V> multimap);
+  void putAll(Multimap<? extends K, ? extends V> multimap);
 
   /**
    * Stores a collection of values with the same key, replacing any existing values for that key.

@@ -73,8 +73,8 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @CanIgnoreReturnValue
   @Override
-  public boolean put(@ParametricNullness K key, @ParametricNullness V value) {
-    return get(key).add(value);
+  public void put(@ParametricNullness K key, @ParametricNullness V value) {
+    get(key).add(value);
   }
 
   @CanIgnoreReturnValue
@@ -94,12 +94,10 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   @CanIgnoreReturnValue
   @Override
-  public boolean putAll(Multimap<? extends K, ? extends V> multimap) {
-    boolean changed = false;
+  public void putAll(Multimap<? extends K, ? extends V> multimap) {
     for (Entry<? extends K, ? extends V> entry : multimap.entries()) {
-      changed |= put(entry.getKey(), entry.getValue());
+      put(entry.getKey(), entry.getValue());
     }
-    return changed;
   }
 
   @CanIgnoreReturnValue

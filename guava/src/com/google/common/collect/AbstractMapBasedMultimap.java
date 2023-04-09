@@ -184,20 +184,18 @@ abstract class AbstractMapBasedMultimap<K extends @Nullable Object, V extends @N
   // Modification Operations
 
   @Override
-  public boolean put(@ParametricNullness K key, @ParametricNullness V value) {
+  public void put(@ParametricNullness K key, @ParametricNullness V value) {
     Collection<V> collection = map.get(key);
     if (collection == null) {
       collection = createCollection(key);
       if (collection.add(value)) {
         totalSize++;
         map.put(key, collection);
-        return true;
       } else {
         throw new AssertionError("New Collection violated the Collection spec");
       }
     } else if (collection.add(value)) {
       totalSize++;
-      return true;
     } else {
       throw new IllegalStateException("The value could not be added to the collection");
     }
