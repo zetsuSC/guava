@@ -41,19 +41,31 @@ import javax.annotation.CheckForNull;
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 interface ReferenceEntry<K, V> {
+
+  final int hash;
+  @CheckForNull final ReferenceEntry<K, V> next;
+  volatile ValueReference<K, V> valueReference = unset();
+
   /** Returns the value reference from this entry. */
-  @CheckForNull
-  ValueReference<K, V> getValueReference();
+  default public ValueReference<K, V> getValueReference() {
+    return valueReference;
+  }
 
   /** Sets the value reference for this entry. */
-  void setValueReference(ValueReference<K, V> valueReference);
+  default public void setValueReference(ValueReference<K, V> valueReference) {
+    this.valueReference = valueReference;
+  }
 
   /** Returns the next entry in the chain. */
   @CheckForNull
-  ReferenceEntry<K, V> getNext();
+  default public ReferenceEntry<K, V> getNext() {
+    return next;
+  }
 
   /** Returns the entry's hash. */
-  int getHash();
+  default public int getHash() {
+    return hash;
+  }
 
   /** Returns the key for this entry. */
   @CheckForNull
